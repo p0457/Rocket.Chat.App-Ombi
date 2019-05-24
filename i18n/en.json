@@ -3,6 +3,6 @@
   "customize_name_description": "Choose the username that this app will post as.",
   "customize_icon": "Customize Icon",
   "customize_icon_description": "Choose the icon that is used for messages from this app.",
-  "slashcommand_params": "set-server [SERVER ADDRESS], login [USERNAME] [PASSWORD], requests [TYPE]",
-  "slashcommand_description": "Interacts with an Ombi Server through the API."
+  "slashcommand_params": "help",
+  "slashcommand_description": "Shows all Ombi App commands"
 }

@@ -5,6 +5,7 @@ import { AppPersistence } from '../lib/persistence';
 import { OmbiApp } from '../OmbiApp';
 
 enum Command {
+  Help = 'help',
   SetServer = 'set-server',
   Login = 'login',
   Requests = 'requests',
@@ -22,6 +23,9 @@ export class OmbiCommand implements ISlashCommand {
     const [command] = context.getArguments();
 
     switch (command) {
+      case Command.Help:
+        await this.processHelpCommand(context, read, modify, http, persis);
+        break;
       case Command.SetServer:
         await this.processSetServersCommand(context, read, modify, http, persis);
         break;
@@ -31,7 +35,25 @@ export class OmbiCommand implements ISlashCommand {
       case Command.Requests:
         await this.processRequestsCommand(context, read, modify, http, persis);
         break;
+      default:
+        await this.processHelpCommand(context, read, modify, http, persis);
+        break;
     }
+  }
+
+  private async processHelpCommand(context: SlashCommandContext, read: IRead, modify: IModify, http: IHttp, persis: IPersistence): Promise<void> {
+    await msgHelper.sendNotificationSingleAttachment({
+      collapsed: false,
+      color: '#e37200',
+      title: {
+        value: 'Ombi App Help Commands',
+      },
+      text: '`/ombi help`\n>Show this help menu\n'
+        + '`/ombi set-server [SERVER ADDRESS]`\n>Set the Ombi Server Address\n'
+        + '`/ombi login [USERNAME] [PASSWORD]`\n>Login to Ombi\n'
+        + '`/ombi requests (movie|tv|show)`\n>Show all requests for Movies or Series',
+    }, read, modify, context.getSender(), context.getRoom());
+    return;
   }
 
   private async processSetServersCommand(context: SlashCommandContext, read: IRead, modify: IModify, http: IHttp, persis: IPersistence): Promise<void> {
