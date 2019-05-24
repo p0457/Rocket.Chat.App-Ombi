@@ -1,0 +1,15 @@
+{
+    "id": "47939eda-2366-4aea-b1ca-58627f5aa109",
+    "version": "0.0.1",
+    "requiredApiVersion": "^1.4.0",
+    "iconFile": "icon.png",
+    "author": {
+        "name": "Thomas Gardner",
+        "homepage": "https://github.com/tgardner851",
+        "support": "https://github.com/tgardner851/Rocket.Chat.App-Ombi"
+    },
+    "name": "Ombi",
+    "nameSlug": "ombi",
+    "classFile": "OmbiApp.ts",
+    "description": "Interact with your Ombi Server."
+}
