@@ -25,7 +25,7 @@ export class OmbiApp extends App {
       await configuration.settings.provideSetting({
         id: 'ombi_icon',
         type: SettingType.STRING,
-        packageValue: 'https://raw.githubusercontent.com/tgardner851/Rocket.Chat.App-Ombi/master/icon.jpg',
+        packageValue: 'https://raw.githubusercontent.com/tgardner851/Rocket.Chat.App-Ombi/master/icon.png',
         required: true,
         public: false,
         i18nLabel: 'customize_icon',
