@@ -373,7 +373,7 @@ export async function sendSearchMetadata(results, serverAddress, read: IRead, mo
     }
 
     attachments.push({
-      collapsed: results.length === 1 ? false : true,
+      collapsed: tempResults.length === 1 ? false : true,
       color: '#e37200',
       title: {
         value: result.title,
