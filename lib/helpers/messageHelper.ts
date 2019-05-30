@@ -1,5 +1,5 @@
 import { IModify, IRead } from '@rocket.chat/apps-engine/definition/accessors';
-import { IMessageAction, IMessageAttachment } from '@rocket.chat/apps-engine/definition/messages';
+import { IMessageAction, IMessageAttachment, MessageActionType, MessageProcessingType } from '@rocket.chat/apps-engine/definition/messages';
 import { IRoom } from '@rocket.chat/apps-engine/definition/rooms';
 import { IUser } from '@rocket.chat/apps-engine/definition/users';
 
@@ -234,6 +234,10 @@ export async function sendSearchMetadata(results, serverAddress, read: IRead, mo
 
     const fields = new Array();
 
+    // Wanted to do actions for request, but can't pass tokens or headers, just urls...
+    // TODO: Revisit when the API has matured and allows for complex HTTP requests with Bearer * headers.
+    const actions = new Array<IMessageAction>();
+
     fields.push({
       short: true,
       title: 'Id',
@@ -276,17 +280,42 @@ export async function sendSearchMetadata(results, serverAddress, read: IRead, mo
     }
 
     if (result.plexUrl) {
-      text += '*Plex: *' + result.plexUrl + '\n';
+      actions.push({
+        type: MessageActionType.BUTTON,
+        url: result.plexUrl,
+        text: 'View on Plex',
+        msg_in_chat_window: false,
+        msg_processing_type: MessageProcessingType.SendMessage,
+      });
     }
     if (result.imdbId) {
-      text += '*IMDB: *https://www.imdb.com/title/' + result.imdbId + '\n';
+      actions.push({
+        type: MessageActionType.BUTTON,
+        url: 'https://www.imdb.com/title/' + result.imdbId,
+        text: 'View on IMDb',
+        msg_in_chat_window: false,
+        msg_processing_type: MessageProcessingType.SendMessage,
+      });
     }
     if (result.theMovieDbId) {
-      text += '*TheMovieDB: *https://www.themoviedb.org/movie/' + result.theMovieDbId + '\n';
+      actions.push({
+        type: MessageActionType.BUTTON,
+        url: 'https://www.themoviedb.org/movie/' + result.theMovieDbId,
+        text: 'View on TheMovieDB',
+        msg_in_chat_window: false,
+        msg_processing_type: MessageProcessingType.SendMessage,
+      });
     }
-    if (result.tvDbId) {
-      text += '*TheTVDB: *https://www.thetvdb.com/dereferrer/series/' + result.tvDbId + '\n';
+    if (result.theTvDbId) {
+      actions.push({
+        type: MessageActionType.BUTTON,
+        url: 'https://www.thetvdb.com/dereferrer/series/' + result.theTvDbId,
+        text: 'View on TheTVDB',
+        msg_in_chat_window: false,
+        msg_processing_type: MessageProcessingType.SendMessage,
+      });
     }
+
     if (result.voteAverage && !isNaN(result.voteAverage) && result.voteCount && !isNaN(result.voteCount)) {
       text += '*Rating: *' + Number(result.voteAverage).toFixed(1) + ' (' + Number(result.voteCount) + ' ratings)' + '\n';
     }
@@ -325,7 +354,6 @@ export async function sendSearchMetadata(results, serverAddress, read: IRead, mo
         });
       }
     }
-    console.log('****9');
     if (result.firstAired) {
       text += '*First Aired on *' + result.firstAired + '\n';
     }
@@ -333,17 +361,19 @@ export async function sendSearchMetadata(results, serverAddress, read: IRead, mo
     if (typeTemp === 'tv') {
       typeTemp = 'show';
     }
-    text += 'To request this ' + typeTemp + ', run `/ombi request ' + type + ' ' + result.id + ' (first|latest|all)`\n';
+    actions.push({
+      type: MessageActionType.BUTTON,
+      text: 'Request ' + typeTemp,
+      msg: '/ombi request ' + type + ' ' + result.id + ' (first|latest|all)',
+      msg_in_chat_window: true,
+      msg_processing_type: MessageProcessingType.RespondWithMessage,
+    });
     if (result.overview) {
       text += '\n*Overview: *' + result.overview;
     }
 
-    // Wanted to do actions for request, but can't pass tokens or headers, just urls...
-    // TODO: Revisit when the API has matured and allows for complex HTTP requests with Bearer * headers.
-    const actions = new Array<IMessageAction>();
-
     attachments.push({
-      collapsed: true,
+      collapsed: results.length === 1 ? false : true,
       color: '#e37200',
       title: {
         value: result.title,
