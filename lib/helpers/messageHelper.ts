@@ -182,6 +182,15 @@ export async function sendRequestMetadata(requests, serverAddress, read: IRead, 
         msg_processing_type: MessageProcessingType.SendMessage,
       });
     }
+    if (request.tvDbId) {
+      actions.push({
+        type: MessageActionType.BUTTON,
+        url: 'https://www.thetvdb.com/dereferrer/series/' + request.tvDbId,
+        text: 'View on TheTVDB',
+        msg_in_chat_window: false,
+        msg_processing_type: MessageProcessingType.SendMessage,
+      });
+    }
 
     if (request.totalSeasons && request.totalSeasons > 0) {
       text += '*Total Seasons: *' + request.totalSeasons + '\n';
@@ -338,6 +347,15 @@ export async function sendSearchMetadata(results, serverAddress, read: IRead, mo
       actions.push({
         type: MessageActionType.BUTTON,
         url: 'https://www.thetvdb.com/dereferrer/series/' + result.theTvDbId,
+        text: 'View on TheTVDB',
+        msg_in_chat_window: false,
+        msg_processing_type: MessageProcessingType.SendMessage,
+      });
+    }
+    if (result.tvDbId) {
+      actions.push({
+        type: MessageActionType.BUTTON,
+        url: 'https://www.thetvdb.com/dereferrer/series/' + result.tvDbId,
         text: 'View on TheTVDB',
         msg_in_chat_window: false,
         msg_processing_type: MessageProcessingType.SendMessage,
