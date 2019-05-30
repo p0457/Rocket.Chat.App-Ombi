@@ -79,6 +79,10 @@ export async function sendRequestMetadata(requests, serverAddress, read: IRead, 
 
     const fields = new Array();
 
+    // Wanted to do actions for approve/mark available, but can't pass tokens or headers, just urls...
+    // TODO: Revisit when the API has matured and allows for complex HTTP requests with Bearer * headers.
+    const actions = new Array<IMessageAction>();
+
     let canApprove = false;
     if (request.canApprove !== undefined) {
       canApprove = request.canApprove;
@@ -142,15 +146,43 @@ export async function sendRequestMetadata(requests, serverAddress, read: IRead, 
       });
     }
 
+    if (request.plexUrl) {
+      actions.push({
+        type: MessageActionType.BUTTON,
+        url: request.plexUrl,
+        text: 'View on Plex',
+        msg_in_chat_window: false,
+        msg_processing_type: MessageProcessingType.SendMessage,
+      });
+    }
     if (request.imdbId) {
-      text += '*IMDB: *https://www.imdb.com/title/' + request.imdbId + '\n';
+      actions.push({
+        type: MessageActionType.BUTTON,
+        url: 'https://www.imdb.com/title/' + request.imdbId,
+        text: 'View on IMDb',
+        msg_in_chat_window: false,
+        msg_processing_type: MessageProcessingType.SendMessage,
+      });
     }
     if (request.theMovieDbId) {
-      text += '*TheMovieDB: *https://www.themoviedb.org/movie/' + request.theMovieDbId + '\n';
+      actions.push({
+        type: MessageActionType.BUTTON,
+        url: 'https://www.themoviedb.org/movie/' + request.theMovieDbId,
+        text: 'View on TheMovieDB',
+        msg_in_chat_window: false,
+        msg_processing_type: MessageProcessingType.SendMessage,
+      });
     }
-    if (request.tvDbId) {
-      text += '*TheTVDB: *https://www.thetvdb.com/dereferrer/series/' + request.tvDbId + '\n';
+    if (request.theTvDbId) {
+      actions.push({
+        type: MessageActionType.BUTTON,
+        url: 'https://www.thetvdb.com/dereferrer/series/' + request.theTvDbId,
+        text: 'View on TheTVDB',
+        msg_in_chat_window: false,
+        msg_processing_type: MessageProcessingType.SendMessage,
+      });
     }
+
     if (request.totalSeasons && request.totalSeasons > 0) {
       text += '*Total Seasons: *' + request.totalSeasons + '\n';
     }
@@ -187,12 +219,8 @@ export async function sendRequestMetadata(requests, serverAddress, read: IRead, 
       text += '\n*Overview: *' + request.overview;
     }
 
-    // Wanted to do actions for approve/mark available, but can't pass tokens or headers, just urls...
-    // TODO: Revisit when the API has matured and allows for complex HTTP requests with Bearer * headers.
-    const actions = new Array<IMessageAction>();
-
     attachments.push({
-      collapsed: true,
+      collapsed: requests.length === 1 ? false : true,
       color: '#e37200',
       title: {
         value: request.title,
