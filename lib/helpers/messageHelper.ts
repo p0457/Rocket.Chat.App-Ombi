@@ -1,5 +1,5 @@
 import { IModify, IRead } from '@rocket.chat/apps-engine/definition/accessors';
-import { IMessageAction, IMessageAttachment, MessageActionType, MessageProcessingType } from '@rocket.chat/apps-engine/definition/messages';
+import { IMessageAction, IMessageAttachment, MessageActionButtonsAlignment, MessageActionType, MessageProcessingType } from '@rocket.chat/apps-engine/definition/messages';
 import { IRoom } from '@rocket.chat/apps-engine/definition/rooms';
 import { IUser } from '@rocket.chat/apps-engine/definition/users';
 
@@ -237,6 +237,7 @@ export async function sendRequestMetadata(requests, serverAddress, read: IRead, 
       },
       fields,
       actions,
+      actionButtonsAlignment: MessageActionButtonsAlignment.HORIZONTAL,
       text,
     });
   }
@@ -407,13 +408,38 @@ export async function sendSearchMetadata(results, serverAddress, read: IRead, mo
     if (typeTemp === 'tv') {
       typeTemp = 'show';
     }
-    actions.push({
-      type: MessageActionType.BUTTON,
-      text: 'Request ' + typeTemp,
-      msg: '/ombi request ' + type + ' ' + result.id + ' (first|latest|all)',
-      msg_in_chat_window: true,
-      msg_processing_type: MessageProcessingType.RespondWithMessage,
-    });
+    const requestMsg = '/ombi request ' + type + ' ' + result.id;
+    if (type === 'tv') {
+      actions.push({
+        type: MessageActionType.BUTTON,
+        text: 'Request ' + typeTemp + ' (first season)',
+        msg: requestMsg + ' first',
+        msg_in_chat_window: true,
+        msg_processing_type: MessageProcessingType.RespondWithMessage,
+      });
+      actions.push({
+        type: MessageActionType.BUTTON,
+        text: 'Request ' + typeTemp + ' (latest season)',
+        msg: requestMsg + ' latest',
+        msg_in_chat_window: true,
+        msg_processing_type: MessageProcessingType.RespondWithMessage,
+      });
+      actions.push({
+        type: MessageActionType.BUTTON,
+        text: 'Request ' + typeTemp + ' (all seasons)',
+        msg: requestMsg + ' all',
+        msg_in_chat_window: true,
+        msg_processing_type: MessageProcessingType.RespondWithMessage,
+      });
+    } else {
+      actions.push({
+        type: MessageActionType.BUTTON,
+        text: 'Request ' + typeTemp,
+        msg: requestMsg,
+        msg_in_chat_window: true,
+        msg_processing_type: MessageProcessingType.RespondWithMessage,
+      });
+    }
     if (result.overview) {
       text += '\n*Overview: *' + result.overview;
     }
@@ -427,6 +453,7 @@ export async function sendSearchMetadata(results, serverAddress, read: IRead, mo
       },
       fields,
       actions,
+      actionButtonsAlignment: MessageActionButtonsAlignment.HORIZONTAL,
       text,
     });
   }
