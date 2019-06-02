@@ -5,6 +5,11 @@ import { App } from '@rocket.chat/apps-engine/definition/App';
 import { IAppInfo } from '@rocket.chat/apps-engine/definition/metadata';
 import { SettingType } from '@rocket.chat/apps-engine/definition/settings';
 import { OmbiCommand } from './commands/OmbiCommand';
+import { OmbiLoginCommand } from './commands/OmbiLoginCommand';
+import { OmbiRequestCommand } from './commands/OmbiRequestCommand';
+import { OmbiRequestsCommand } from './commands/OmbiRequestsCommand';
+import { OmbiSearchCommand } from './commands/OmbiSearchCommand';
+import { OmbiSetServerCommand } from './commands/OmbiSetServerCommand';
 
 export class OmbiApp extends App {
     constructor(info: IAppInfo, logger: ILogger) {
@@ -33,5 +38,10 @@ export class OmbiApp extends App {
       });
 
       await configuration.slashCommands.provideSlashCommand(new OmbiCommand(this));
+      await configuration.slashCommands.provideSlashCommand(new OmbiSetServerCommand(this));
+      await configuration.slashCommands.provideSlashCommand(new OmbiLoginCommand(this));
+      await configuration.slashCommands.provideSlashCommand(new OmbiRequestsCommand(this));
+      await configuration.slashCommands.provideSlashCommand(new OmbiSearchCommand(this));
+      await configuration.slashCommands.provideSlashCommand(new OmbiRequestCommand(this));
     }
 }
