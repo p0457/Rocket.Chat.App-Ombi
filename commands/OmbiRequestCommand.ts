@@ -1,7 +1,5 @@
 import { IHttp, IModify, IPersistence, IRead } from '@rocket.chat/apps-engine/definition/accessors';
-import { IRoom } from '@rocket.chat/apps-engine/definition/rooms';
 import { ISlashCommand, SlashCommandContext } from '@rocket.chat/apps-engine/definition/slashcommands';
-import { IUser } from '@rocket.chat/apps-engine/definition/users';
 import * as msgHelper from '../lib/helpers/messageHelper';
 import { AppPersistence } from '../lib/persistence';
 import { OmbiApp } from '../OmbiApp';
@@ -18,7 +16,7 @@ export class OmbiRequestCommand implements ISlashCommand {
     const [requestType, id, specifier] = context.getArguments();
 
     if (!requestType || !id) {
-      await this.sendUsage(read, modify, context.getSender(), context.getRoom(), 'Type or Id was missing!');
+      await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'Type or Id was missing!');
       return;
     }
 
@@ -80,7 +78,7 @@ export class OmbiRequestCommand implements ISlashCommand {
         return;
       }
     } else {
-      await this.sendUsage(read, modify, context.getSender(), context.getRoom(), 'Type was invalid `' + type + '`!');
+      await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'Type was invalid `' + type + '`!');
       return;
     }
 
@@ -131,11 +129,5 @@ export class OmbiRequestCommand implements ISlashCommand {
         text: 'Please try again.',
       }, read, modify, context.getSender(), context.getRoom());
     }
-  }
-
-  private async sendUsage(read: IRead, modify: IModify, user: IUser, room: IRoom, additionalText?) {
-    // tslint:disable-next-line:max-line-length
-    await msgHelper.sendNotification(additionalText ? additionalText + '\n' : '' + 'Usage: `/ombi-request [movie|tv|show] [ID] (first|latest|all)`', read, modify, user, room);
-    return;
   }
 }

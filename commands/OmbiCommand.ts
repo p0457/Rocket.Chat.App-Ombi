@@ -2,6 +2,7 @@ import { IHttp, IModify, IPersistence, IRead } from '@rocket.chat/apps-engine/de
 import { IMessageAttachmentField } from '@rocket.chat/apps-engine/definition/messages';
 import { ISlashCommand, SlashCommandContext } from '@rocket.chat/apps-engine/definition/slashcommands';
 import * as msgHelper from '../lib/helpers/messageHelper';
+import usage from '../lib/helpers/usage';
 import { AppPersistence } from '../lib/persistence';
 import { OmbiApp } from '../OmbiApp';
 
@@ -27,15 +28,17 @@ export class OmbiCommand implements ISlashCommand {
       });
     }
 
-    const text = '`/ombi`\n>Show this help menu\n'
-    + '`/ombi-set-server [SERVER ADDRESS]`\n>Set the Ombi Server Address\n'
-    + '`/ombi-login [USERNAME] [PASSWORD]`\n>Login to Ombi\n'
-    // tslint:disable-next-line:max-line-length
-    + '`/ombi-requests [movie|tv|show] (approved|unapproved|available|unavailable|denied)`\n>Show all requests for Movies or Series, optionally filter by approved/available/denied\n'
-    + '`/ombi-search [movie|tv|show] [QUERY]`\n>Search Ombi for Movies or Series\n'
-    // tslint:disable-next-line:max-line-length
-    + '`/ombi-request [movie|tv|show] [ID] (first|latest|all)`\n>Request a movie using type and id (get id using `/ombi-search`); If series, specify first, latest, or all season(s)'
-    + '\n\nFirst, set your server with `/ombi-set-server`. Then, login using `/ombi-login`.\n'
+    let text = '';
+
+    for (const p in usage) {
+      if (usage.hasOwnProperty(p)) {
+        if (usage[p].command && usage[p].usage && usage[p].description) {
+          text += usage[p].usage + '\n>' + usage[p].description + '\n';
+        }
+      }
+    }
+
+    text += '\nFirst, set your server with `/ombi-set-server`. Then, login using `/ombi-login`.\n'
     + 'View your requests with `/ombi-requests`, or make a new request by searching using `/ombi-search`, getting '
     + 'the id, and using that to generate the request using `/ombi-request`.';
 

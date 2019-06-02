@@ -1,7 +1,5 @@
 import { IHttp, IModify, IPersistence, IRead } from '@rocket.chat/apps-engine/definition/accessors';
-import { IRoom } from '@rocket.chat/apps-engine/definition/rooms';
 import { ISlashCommand, SlashCommandContext } from '@rocket.chat/apps-engine/definition/slashcommands';
-import { IUser } from '@rocket.chat/apps-engine/definition/users';
 import * as msgHelper from '../lib/helpers/messageHelper';
 import { AppPersistence } from '../lib/persistence';
 import { OmbiApp } from '../OmbiApp';
@@ -18,7 +16,7 @@ export class OmbiRequestsCommand implements ISlashCommand {
     const [requestType, filter] = context.getArguments();
 
     if (!requestType) {
-      await this.sendUsage(read, modify, context.getSender(), context.getRoom(), 'Invalid request type!');
+      await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'Invalid request type!');
       return;
     }
 
@@ -27,7 +25,8 @@ export class OmbiRequestsCommand implements ISlashCommand {
       filterScrubbed = filter.toLowerCase().trim();
       // tslint:disable-next-line:max-line-length
       if (filterScrubbed !== 'approved' && filterScrubbed !== 'unapproved' && filterScrubbed !== 'available' && filterScrubbed !== 'unavailable' && filterScrubbed !== 'denied') {
-        await this.sendUsage(read, modify, context.getSender(), context.getRoom(), 'Didn\'t understand your filter `' + filterScrubbed + '`!');
+        // tslint:disable-next-line:max-line-length
+        await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'Didn\'t understand your filter `' + filterScrubbed + '`!');
         return;
       }
     }
@@ -55,7 +54,7 @@ export class OmbiRequestsCommand implements ISlashCommand {
     } else if (type === 'show' || type === 'tv') {
       url += 'tv';
     } else {
-      await this.sendUsage(read, modify, context.getSender(), context.getRoom(), 'Invalid request type `' + type + '`!');
+      await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'Invalid request type `' + type + '`!');
       return;
     }
 
@@ -246,11 +245,5 @@ export class OmbiRequestsCommand implements ISlashCommand {
       }, read, modify, context.getSender(), context.getRoom());
       return;
     }
-  }
-
-  private async sendUsage(read: IRead, modify: IModify, user: IUser, room: IRoom, additionalText?) {
-    // tslint:disable-next-line:max-line-length
-    await msgHelper.sendNotification(additionalText ? additionalText + '\n' : '' + 'Usage: `/ombi-requests [movie|tv|show] (approved|unapproved|available|unavailable|denied)`', read, modify, user, room);
-    return;
   }
 }

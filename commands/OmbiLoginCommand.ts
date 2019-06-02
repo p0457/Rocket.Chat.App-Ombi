@@ -1,7 +1,5 @@
 import { IHttp, IModify, IPersistence, IRead } from '@rocket.chat/apps-engine/definition/accessors';
-import { IRoom } from '@rocket.chat/apps-engine/definition/rooms';
 import { ISlashCommand, SlashCommandContext } from '@rocket.chat/apps-engine/definition/slashcommands';
-import { IUser } from '@rocket.chat/apps-engine/definition/users';
 import * as msgHelper from '../lib/helpers/messageHelper';
 import { AppPersistence } from '../lib/persistence';
 import { OmbiApp } from '../OmbiApp';
@@ -18,7 +16,7 @@ export class OmbiLoginCommand implements ISlashCommand {
     const [username, password] = context.getArguments();
 
     if (!username || !password) {
-      await this.sendUsage(read, modify, context.getSender(), context.getRoom(), 'Username and/or password was invalid!');
+      await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'Username and/or password was invalid!');
       return;
     }
 
@@ -89,10 +87,5 @@ export class OmbiLoginCommand implements ISlashCommand {
         text: 'Please try again.',
       }, read, modify, context.getSender(), context.getRoom());
     }
-  }
-
-  private async sendUsage(read: IRead, modify: IModify, user: IUser, room: IRoom, additionalText?) {
-    await msgHelper.sendNotification(additionalText ? additionalText + '\n' : '' + 'Usage: `/ombi-login [USERNAME] [PASSWORD]`', read, modify, user, room);
-    return;
   }
 }

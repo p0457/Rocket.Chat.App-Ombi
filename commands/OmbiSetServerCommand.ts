@@ -18,7 +18,7 @@ export class OmbiSetServerCommand implements ISlashCommand {
     const [serverAddress] = context.getArguments();
 
     if (!serverAddress) {
-      await this.sendUsage(read, modify, context.getSender(), context.getRoom());
+      await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'No server address provided!');
       return;
     }
 
@@ -31,7 +31,7 @@ export class OmbiSetServerCommand implements ISlashCommand {
     const isValidUrl = !!urlRegex.test(serverAddress);
 
     if (!isValidUrl) {
-      await this.sendUsage(read, modify, context.getSender(), context.getRoom(), 'Server Address was invalid!');
+      await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'Server Address was invalid!');
       return;
     }
 
@@ -53,10 +53,5 @@ export class OmbiSetServerCommand implements ISlashCommand {
         link: server,
       },
     }, read, modify, context.getSender(), context.getRoom());
-  }
-
-  private async sendUsage(read: IRead, modify: IModify, user: IUser, room: IRoom, additionalText?) {
-    await msgHelper.sendNotification(additionalText ? additionalText + '\n' : '' + 'Usage: `/ombi-set-server [SERVER ADDRESS]`', read, modify, user, room);
-    return;
   }
 }

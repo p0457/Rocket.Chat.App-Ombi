@@ -17,7 +17,7 @@ export class OmbiSearchCommand implements ISlashCommand {
   public async executor(context: SlashCommandContext, read: IRead, modify: IModify, http: IHttp, persis: IPersistence): Promise<void> {
     const args = context.getArguments();
     if (args.length < 2) {
-      await this.sendUsage(read, modify, context.getSender(), context.getRoom(), 'Didn\'t have enough arguments!');
+      await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'Didn\'t have enough arguments!');
       return;
     }
     const typeArg = args[0];
@@ -29,7 +29,7 @@ export class OmbiSearchCommand implements ISlashCommand {
     searchArg = searchArg.trim();
 
     if (!typeArg || searchArg === '') {
-      await this.sendUsage(read, modify, context.getSender(), context.getRoom(), 'Type not included or search argument invalid!');
+      await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'Type not included or search argument invalid!');
       return;
     }
 
@@ -54,7 +54,7 @@ export class OmbiSearchCommand implements ISlashCommand {
     } else if (typeArg === 'tv' || typeArg === 'show') {
       url += 'tv/' + searchArg;
     } else {
-      await this.sendUsage(read, modify, context.getSender(), context.getRoom(), 'Type was invalid `' + typeArg + '`!');
+      await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'Type was invalid `' + typeArg + '`!');
       return;
     }
 
@@ -93,11 +93,5 @@ export class OmbiSearchCommand implements ISlashCommand {
       }, read, modify, context.getSender(), context.getRoom());
       return;
     }
-  }
-
-  private async sendUsage(read: IRead, modify: IModify, user: IUser, room: IRoom, additionalText?) {
-    // tslint:disable-next-line:max-line-length
-    await msgHelper.sendNotification(additionalText ? additionalText + '\n' : '' + 'Usage: `/ombi-search [movie|tv|show] [QUERY]`', read, modify, user, room);
-    return;
   }
 }
