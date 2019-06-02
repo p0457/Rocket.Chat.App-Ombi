@@ -35,9 +35,9 @@ export class OmbiCommand implements ISlashCommand {
     + '`/ombi-search [movie|tv|show] [QUERY]`\n>Search Ombi for Movies or Series\n'
     // tslint:disable-next-line:max-line-length
     + '`/ombi-request [movie|tv|show] [ID] (first|latest|all)`\n>Request a movie using type and id (get id using `/ombi-search`); If series, specify first, latest, or all season(s)'
-    + '\n\nFirst, set your server with `set-server`. Then, login using `login`.\n'
-    + 'View your requests with `requests`, or make a new request by searching using `search`, getting'
-    + 'the id, and using that to generate the request using `request`.';
+    + '\n\nFirst, set your server with `/ombi-set-server`. Then, login using `/ombi-login`.\n'
+    + 'View your requests with `/ombi-requests`, or make a new request by searching using `/ombi-search`, getting '
+    + 'the id, and using that to generate the request using `/ombi-request`.';
 
     await msgHelper.sendNotificationSingleAttachment({
       collapsed: false,
