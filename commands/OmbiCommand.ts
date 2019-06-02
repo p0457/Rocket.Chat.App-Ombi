@@ -38,7 +38,7 @@ export class OmbiCommand implements ISlashCommand {
       }
     }
 
-    text += '\nFirst, set your server with `/ombi-set-server`. Then, login using `/ombi-login`.\n'
+    text += '\n\nFirst, set your server with `/ombi-set-server`. Then, login using `/ombi-login`.\n'
     + 'View your requests with `/ombi-requests`, or make a new request by searching using `/ombi-search`, getting '
     + 'the id, and using that to generate the request using `/ombi-request`.';
 
