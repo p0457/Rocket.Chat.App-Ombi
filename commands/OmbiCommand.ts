@@ -43,7 +43,7 @@ export class OmbiCommand implements ISlashCommand {
       collapsed: false,
       color: '#e37200',
       title: {
-        value: 'Ombi App Help Commands',
+        value: 'Commands',
       },
       text,
       fields,
