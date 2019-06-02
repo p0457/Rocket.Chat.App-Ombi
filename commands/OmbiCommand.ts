@@ -27,7 +27,7 @@ export class OmbiCommand implements ISlashCommand {
       });
     }
 
-    const text = '`/ombi help`\n>Show this help menu\n'
+    const text = '`/ombi`\n>Show this help menu\n'
     + '`/ombi-set-server [SERVER ADDRESS]`\n>Set the Ombi Server Address\n'
     + '`/ombi-login [USERNAME] [PASSWORD]`\n>Login to Ombi\n'
     // tslint:disable-next-line:max-line-length
