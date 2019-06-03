@@ -52,6 +52,7 @@ export class OmbiSetServerCommand implements ISlashCommand {
         value: 'Successfully set server!',
         link: server,
       },
+      text: '*Server: *' + serverAddress,
     }, read, modify, context.getSender(), context.getRoom());
   }
 }
