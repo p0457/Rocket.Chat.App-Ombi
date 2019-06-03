@@ -2,6 +2,7 @@ import { IModify, IRead } from '@rocket.chat/apps-engine/definition/accessors';
 import { IMessageAction, IMessageAttachment, MessageActionButtonsAlignment, MessageActionType, MessageProcessingType } from '@rocket.chat/apps-engine/definition/messages';
 import { IRoom } from '@rocket.chat/apps-engine/definition/rooms';
 import { IUser } from '@rocket.chat/apps-engine/definition/users';
+import { formatDate, getYear, timeSince } from './dates';
 import usage from './usage';
 
 export async function sendNotification(text: string, read: IRead, modify: IModify, user: IUser, room: IRoom): Promise<void> {
@@ -86,7 +87,7 @@ export async function sendTokenExpired(read: IRead, modify: IModify, user: IUser
   }, read, modify, user, room);
 }
 
-export async function sendRequestMetadata(requests, serverAddress, read: IRead, modify: IModify, user: IUser, room: IRoom, query?: string): Promise<void> {
+export async function sendRequestMetadata(requests, serverAddress, requestType, read: IRead, modify: IModify, user: IUser, room: IRoom, query?: string): Promise<void> {
   const attachments = new Array<IMessageAttachment>();
   // Initial attachment for results count
   attachments.push({
@@ -102,18 +103,34 @@ export async function sendRequestMetadata(requests, serverAddress, read: IRead, 
   for (let x = 0; x < requests.length; x++) {
     const request = requests[x];
 
-    let text = '';
-
-    const fields = new Array();
-
-    // Wanted to do actions for approve/mark available, but can't pass tokens or headers, just urls...
-    // TODO: Revisit when the API has matured and allows for complex HTTP requests with Bearer * headers.
-    const actions = new Array<IMessageAction>();
-
     let canApprove = false;
     if (request.canApprove !== undefined) {
       canApprove = request.canApprove;
+    } else if (request.childRequests && request.childRequests[0].approved !== undefined) {
+      canApprove = request.childRequests[0].approved;
     }
+    let canMarkAvailable = false;
+    if (request.available !== undefined) {
+      canMarkAvailable = !request.available;
+    } else if (request.childRequests && request.childRequests[0].available !== undefined) {
+      canMarkAvailable = !request.childRequests[0].available;
+    }
+    let canMarkUnavailable = false;
+    if (request.available !== undefined) {
+      canMarkUnavailable = request.available;
+    } else if (request.childRequests && request.childRequests[0].available !== undefined) {
+      canMarkUnavailable = request.childRequests[0].available;
+    }
+    let canDeny = false;
+    if (request.denied !== undefined) {
+      canDeny = !request.denied;
+    } else if (request.childRequests && request.childRequests[0].denied !== undefined) {
+      canDeny = !request.childRequests[0].denied;
+    }
+
+    // FIELDS
+
+    const fields = new Array();
 
     fields.push({
       short: true,
@@ -124,7 +141,7 @@ export async function sendRequestMetadata(requests, serverAddress, read: IRead, 
       fields.push({
         short: true,
         title: 'Requested',
-        value: request.requestedDate + '\n' + request.requestedUser.userAlias,
+        value: formatDate(request.requestedDate) + '\n_(' + timeSince(request.requestedDate) + ')_\n' + request.requestedUser.userAlias,
       });
     }
     if (request.status) {
@@ -137,8 +154,8 @@ export async function sendRequestMetadata(requests, serverAddress, read: IRead, 
     if (request.releaseDate) {
       fields.push({
         short: true,
-        title: 'Released on',
-        value: request.releaseDate,
+        title: timeSince(request.releaseDate).indexOf('ago') !== -1 ? 'Released on' : 'Releases on',
+        value: formatDate(request.releaseDate) + '\n_(' + timeSince(request.releaseDate) + ')_\n',
       });
     }
     if (request.digitalRelease !== undefined) {
@@ -172,6 +189,12 @@ export async function sendRequestMetadata(requests, serverAddress, read: IRead, 
         value: request.available,
       });
     }
+
+    // ACTIONS
+
+    // Wanted to do actions for approve/mark available, but can't pass tokens or headers, just urls...
+    // TODO: Revisit when the API has matured and allows for complex HTTP requests with Bearer * headers.
+    const actions = new Array<IMessageAction>();
 
     if (request.plexUrl) {
       actions.push({
@@ -218,6 +241,162 @@ export async function sendRequestMetadata(requests, serverAddress, read: IRead, 
         msg_processing_type: MessageProcessingType.SendMessage,
       });
     }
+    if (canApprove) {
+      let approveText = 'Approve ';
+      if (requestType === 'movie') {
+        approveText += 'Movie';
+      } else {
+        approveText += 'Entire Show';
+      }
+      const apporoveCmd = '/ombi-approve ' + requestType + ' ';
+      actions.push({
+        type: MessageActionType.BUTTON,
+        text: approveText,
+        msg: apporoveCmd + request.id,
+        msg_in_chat_window: true,
+        msg_processing_type: MessageProcessingType.RespondWithMessage,
+      });
+
+      if (request.childRequests && Array.isArray(request.childRequests) && request.childRequests.length === 1) {
+        const seasonsRequested = request.childRequests[0].seasonRequests;
+        if (seasonsRequested && Array.isArray(seasonsRequested) && seasonsRequested.length > 0) {
+          seasonsRequested.forEach((season) => {
+            actions.push({
+              type: MessageActionType.BUTTON,
+              text: 'Approve Season ' + season.seasonNumber,
+              msg: apporoveCmd + season.id, // TODO: Make sure this works, might have to do whole season based on website limitations...
+              msg_in_chat_window: true,
+              msg_processing_type: MessageProcessingType.RespondWithMessage,
+            });
+          });
+        }
+      }
+    }
+    if (canMarkAvailable) {
+      let availableText = 'Mark ';
+      if (requestType === 'movie') {
+        availableText += 'Movie Available';
+      } else {
+        availableText += 'Entire Show Available';
+      }
+      const availableCmd = '/ombi-markavailable ' + requestType + ' ';
+      actions.push({
+        type: MessageActionType.BUTTON,
+        text: availableText,
+        msg: availableCmd + request.id,
+        msg_in_chat_window: true,
+        msg_processing_type: MessageProcessingType.RespondWithMessage,
+      });
+
+      if (request.childRequests && Array.isArray(request.childRequests) && request.childRequests.length === 1) {
+        const seasonsRequested = request.childRequests[0].seasonRequests;
+        if (seasonsRequested && Array.isArray(seasonsRequested) && seasonsRequested.length > 0) {
+          seasonsRequested.forEach((season) => {
+            actions.push({
+              type: MessageActionType.BUTTON,
+              text: 'Mark Season ' + season.seasonNumber + ' Available',
+              msg: availableCmd + season.id, // TODO: Make sure this works, might have to do whole season based on website limitations...
+              msg_in_chat_window: true,
+              msg_processing_type: MessageProcessingType.RespondWithMessage,
+            });
+          });
+        }
+      }
+    }
+    if (canMarkUnavailable) {
+      let unavailableText = 'Mark ';
+      if (requestType === 'movie') {
+        unavailableText += 'Movie Unvailable';
+      } else {
+        unavailableText += 'Entire Show Unvailable';
+      }
+      const unavailableCmd = '/ombi-markunavailable ' + requestType + ' ';
+      actions.push({
+        type: MessageActionType.BUTTON,
+        text: unavailableText,
+        msg: unavailableCmd + request.id,
+        msg_in_chat_window: true,
+        msg_processing_type: MessageProcessingType.RespondWithMessage,
+      });
+
+      if (request.childRequests && Array.isArray(request.childRequests) && request.childRequests.length === 1) {
+        const seasonsRequested = request.childRequests[0].seasonRequests;
+        if (seasonsRequested && Array.isArray(seasonsRequested) && seasonsRequested.length > 0) {
+          seasonsRequested.forEach((season) => {
+            actions.push({
+              type: MessageActionType.BUTTON,
+              text: 'Mark Season ' + season.seasonNumber + ' Unvailable',
+              msg: unavailableCmd + season.id, // TODO: Make sure this works, might have to do whole season based on website limitations...
+              msg_in_chat_window: true,
+              msg_processing_type: MessageProcessingType.RespondWithMessage,
+            });
+          });
+        }
+      }
+    }
+    if (canDeny) {
+      let denyText = 'Deny ';
+      if (requestType === 'movie') {
+        denyText += 'Movie Request';
+      } else {
+        denyText += 'Entire Show Request';
+      }
+      const denyCmd = '/ombi-deny ' + requestType + ' ';
+      actions.push({
+        type: MessageActionType.BUTTON,
+        text: denyText,
+        msg: denyCmd + request.id,
+        msg_in_chat_window: true,
+        msg_processing_type: MessageProcessingType.RespondWithMessage,
+      });
+
+      if (request.childRequests && Array.isArray(request.childRequests) && request.childRequests.length === 1) {
+        const seasonsRequested = request.childRequests[0].seasonRequests;
+        if (seasonsRequested && Array.isArray(seasonsRequested) && seasonsRequested.length > 0) {
+          seasonsRequested.forEach((season) => {
+            actions.push({
+              type: MessageActionType.BUTTON,
+              text: 'Deny Season ' + season.seasonNumber + ' Request',
+              msg: denyCmd + season.id, // TODO: Make sure this works, might have to do whole season based on website limitations...
+              msg_in_chat_window: true,
+              msg_processing_type: MessageProcessingType.RespondWithMessage,
+            });
+          });
+        }
+      }
+    }
+    let deleteText = 'Delete ';
+    if (requestType === 'movie') {
+      deleteText += 'Movie Request';
+    } else {
+      deleteText += 'Entire Show Request';
+    }
+    const deleteCmd = '/ombi-delete ' + requestType + ' ';
+    actions.push({
+      type: MessageActionType.BUTTON,
+      text: deleteText,
+      msg: deleteCmd + request.id,
+      msg_in_chat_window: true,
+      msg_processing_type: MessageProcessingType.RespondWithMessage,
+    });
+
+    if (request.childRequests && Array.isArray(request.childRequests) && request.childRequests.length === 1) {
+      const seasonsRequested = request.childRequests[0].seasonRequests;
+      if (seasonsRequested && Array.isArray(seasonsRequested) && seasonsRequested.length > 0) {
+        seasonsRequested.forEach((season) => {
+          actions.push({
+            type: MessageActionType.BUTTON,
+            text: 'Delete Season ' + season.seasonNumber + ' Request',
+            msg: deleteCmd + season.id, // TODO: Make sure this works, might have to do whole season based on website limitations...
+            msg_in_chat_window: true,
+            msg_processing_type: MessageProcessingType.RespondWithMessage,
+          });
+        });
+      }
+    }
+
+    // TEXT
+    let text = '';
 
     if (request.totalSeasons && request.totalSeasons > 0) {
       text += '*Total Seasons: *' + request.totalSeasons + '\n';
@@ -230,7 +409,8 @@ export async function sendRequestMetadata(requests, serverAddress, read: IRead, 
         fields.push({
           short: true,
           title: 'Requested',
-          value: request.childRequests[0].requestedDate + '\n' + request.childRequests[0].requestedUser.userAlias,
+          // tslint:disable-next-line:max-line-length
+          value: formatDate(request.childRequests[0].requestedDate) + '\n_(' + timeSince(request.childRequests[0].requestedDate) + ')_\n' + request.childRequests[0].requestedUser.userAlias,
         });
       }
       const seasonsRequested = request.childRequests[0].seasonRequests;
@@ -242,6 +422,11 @@ export async function sendRequestMetadata(requests, serverAddress, read: IRead, 
             season.episodes.forEach((episode) => {
               text += '------*Episode ' + episode.episodeNumber + ' - ' + episode.title + '*\n';
               text += '__________*Link: *' + episode.url + '\n';
+              if (season.airDate) {
+                text += '__________*Aired: *' + formatDate(season.airDate) + ' _(' + timeSince(season.airDate) + ')' + '\n';
+              } else {
+                text += '__________*Not Yet Aired*\n';
+              }
               text += '__________*Approved? *' + episode.approved + '\n';
               text += '__________*Available?: *' + episode.available + '\n';
               text += '__________*Season Id: *' + episode.seasonId + '\n';
@@ -255,11 +440,17 @@ export async function sendRequestMetadata(requests, serverAddress, read: IRead, 
       text += '\n*Overview: *' + request.overview;
     }
 
+    let attachmentTitle = request.title;
+    const releaseYear = getYear(request.releaseDate);
+    if (request.releaseDate && releaseYear && releaseYear > 1000) {
+      attachmentTitle += ` (${releaseYear})`;
+    }
+
     attachments.push({
       collapsed: requests.length === 1 ? false : true,
       color: '#e37200',
       title: {
-        value: request.title,
+        value: attachmentTitle,
         link: serverAddress,
       },
       fields,
@@ -325,14 +516,14 @@ export async function sendSearchMetadata(results, serverAddress, read: IRead, mo
     if (result.releaseDate) {
       fields.push({
         short: true,
-        title: 'Released on',
+        title: timeSince(result.releaseDate).indexOf('ago') !== -1 ? 'Released on' : 'Releases on',
         value: result.releaseDate,
       });
     }
     if (result.digitalReleaseDate !== undefined) {
       fields.push({
         short: true,
-        title: 'Digitally Released on',
+        title: timeSince(result.releaseDate).indexOf('ago') !== -1 ? 'Digitally Released on' : 'Digitally Releases on',
         value: result.digitalReleaseDate,
       });
     }

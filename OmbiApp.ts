@@ -4,8 +4,13 @@ import {
 import { App } from '@rocket.chat/apps-engine/definition/App';
 import { IAppInfo } from '@rocket.chat/apps-engine/definition/metadata';
 import { SettingType } from '@rocket.chat/apps-engine/definition/settings';
+import { OmbiApproveCommand } from './commands/OmbiApproveCommand';
 import { OmbiCommand } from './commands/OmbiCommand';
+import { OmbiDeleteCommand } from './commands/OmbiDeleteCommand';
+import { OmbiDenyCommand } from './commands/OmbiDenyCommand';
 import { OmbiLoginCommand } from './commands/OmbiLoginCommand';
+import { OmbiMarkAvailableCommand } from './commands/OmbiMarkAvailableCommand';
+import { OmbiMarkUnavailableCommand } from './commands/OmbiMarkUnavailableCommand';
 import { OmbiRequestCommand } from './commands/OmbiRequestCommand';
 import { OmbiRequestsCommand } from './commands/OmbiRequestsCommand';
 import { OmbiSearchCommand } from './commands/OmbiSearchCommand';
@@ -43,5 +48,10 @@ export class OmbiApp extends App {
       await configuration.slashCommands.provideSlashCommand(new OmbiRequestsCommand(this));
       await configuration.slashCommands.provideSlashCommand(new OmbiSearchCommand(this));
       await configuration.slashCommands.provideSlashCommand(new OmbiRequestCommand(this));
+      await configuration.slashCommands.provideSlashCommand(new OmbiApproveCommand(this));
+      await configuration.slashCommands.provideSlashCommand(new OmbiDenyCommand(this));
+      await configuration.slashCommands.provideSlashCommand(new OmbiMarkAvailableCommand(this));
+      await configuration.slashCommands.provideSlashCommand(new OmbiMarkUnavailableCommand(this));
+      await configuration.slashCommands.provideSlashCommand(new OmbiDeleteCommand(this));
     }
 }

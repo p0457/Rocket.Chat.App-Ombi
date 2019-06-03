@@ -4,16 +4,16 @@ import * as msgHelper from '../lib/helpers/messageHelper';
 import { AppPersistence } from '../lib/persistence';
 import { OmbiApp } from '../OmbiApp';
 
-export class OmbiRequestCommand implements ISlashCommand {
-  public command = 'ombi-request';
-  public i18nParamsExample = 'slashcommand_request_params';
-  public i18nDescription = 'slashcommand_request_description';
+export class OmbiDeleteCommand implements ISlashCommand {
+  public command = 'ombi-delete';
+  public i18nParamsExample = 'slashcommand_delete_params';
+  public i18nDescription = 'slashcommand_delete_description';
   public providesPreview = false;
 
   public constructor(private readonly app: OmbiApp) {}
 
   public async executor(context: SlashCommandContext, read: IRead, modify: IModify, http: IHttp, persis: IPersistence): Promise<void> {
-    const [requestType, id, specifier] = context.getArguments();
+    const [requestType, id] = context.getArguments();
 
     if (!requestType || !id) {
       await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'Type or Id was missing!');
@@ -32,58 +32,32 @@ export class OmbiRequestCommand implements ISlashCommand {
     const serverAddress = await persistence.getUserServer(context.getSender());
     let url = serverAddress + '/api/v1/Request/';
     const headers = {
-      Authorization: 'Bearer ' + token,
-      Accept: 'application/json',
+      'Authorization': 'Bearer ' + token,
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
     };
 
     const type = requestType.trim().toLowerCase();
 
-    let data = {};
+    const params = {
+      requestId: id,
+    };
     let typeForReturnMessage = type;
 
     if (type === 'movie') {
       typeForReturnMessage = 'Movie';
       url += 'movie';
-      data = {
-        theMovieDbId: id,
-      };
     } else if (type === 'show' || type === 'tv') {
       typeForReturnMessage = 'TV Show';
-      url += 'tv';
-
-      if (specifier === 'first') {
-        data = {
-          id,
-          firstSeason: true,
-          latestSeason: false,
-          requestAll: false,
-        };
-      } else if (specifier === 'latest') {
-        data = {
-          id,
-          firstSeason: false,
-          latestSeason: true,
-          requestAll: false,
-        };
-      } else if (specifier === 'all') {
-        data = {
-          id,
-          firstSeason: false,
-          latestSeason: false,
-          requestAll: true,
-        };
-      } else {
-        await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'Specifier for series was invalid `' + type + '`!');
-        return;
-      }
+      url += 'tv/child';
     } else {
       await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'Type was invalid `' + type + '`!');
       return;
     }
 
-    const requestResponse = await http.post(url, {
+    const requestResponse = await http.del(url, {
       headers,
-      data,
+      params,
     });
 
     if (!requestResponse) {
@@ -105,7 +79,7 @@ export class OmbiRequestCommand implements ISlashCommand {
 
     if (requestResponse.statusCode === 200 && requestResponse.content && requestResponse.content) {
       const jsonResult = JSON.parse(requestResponse.content);
-      let message = (jsonResult && jsonResult.message) ? jsonResult.message : (typeForReturnMessage + ' ' + id + ' has been successfully requested!');
+      let message = (jsonResult && jsonResult.message) ? jsonResult.message : (typeForReturnMessage + ' Request ' + id + ' has been successfully deleted!');
       let color = '#00CE00';
       if (jsonResult && jsonResult.errorMessage && jsonResult.isError) {
         message = jsonResult.errorMessage;

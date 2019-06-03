@@ -13,22 +13,47 @@ export class OmbiRequestsCommand implements ISlashCommand {
   public constructor(private readonly app: OmbiApp) {}
 
   public async executor(context: SlashCommandContext, read: IRead, modify: IModify, http: IHttp, persis: IPersistence): Promise<void> {
-    const [requestType, filter] = context.getArguments();
+    const [requestType, filter, query] = context.getArguments();
 
     if (!requestType) {
       await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'Invalid request type!');
       return;
     }
 
-    let filterScrubbed = '';
-    if (filter)  {
-      filterScrubbed = filter.toLowerCase().trim();
-      // tslint:disable-next-line:max-line-length
-      if (filterScrubbed !== 'approved' && filterScrubbed !== 'unapproved' && filterScrubbed !== 'available' && filterScrubbed !== 'unavailable' && filterScrubbed !== 'denied') {
-        // tslint:disable-next-line:max-line-length
-        await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'Didn\'t understand your filter `' + filterScrubbed + '`!');
-        return;
+    // FILTERS
+    let m;
+    const filtersRegex = /filters=\((.*?)\)/gm;
+    let filtersText = '';
+    let filtersTextToRemove = '';
+    const filters = new Array();
+
+    // tslint:disable-next-line:no-conditional-assignment
+    while ((m = filtersRegex.exec(filter)) !== null) {
+      // This is necessary to avoid infinite loops with zero-width matches
+      if (m.index === filtersRegex.lastIndex) {
+        filtersRegex.lastIndex++;
       }
+      m.forEach((match, groupIndex) => {
+        if (groupIndex === 0) {
+          filtersTextToRemove = match;
+        } else if (groupIndex === 1) {
+          filtersText = match;
+        }
+      });
+    }
+
+    let filtersArr = new Array();
+    if (filtersText && filtersText !== '' && filtersTextToRemove && filtersTextToRemove !== '') {
+      // Set filters array
+      filtersArr = filtersText.split(',');
+      filtersArr.forEach(async (filterTemp) => {
+        filterTemp = filterTemp.toLowerCase().trim();
+        if (filterTemp !== 'released' && filterTemp !== 'approved' && filterTemp !== 'unapproved' &&
+        filterTemp !== 'available' && filterTemp !== 'unavailable' && filterTemp !== 'denied') {
+            await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'Didn\'t understand your filter!');
+            return;
+        }
+      });
     }
 
     const persistence = new AppPersistence(persis, read.getPersistenceReader());
@@ -81,129 +106,212 @@ export class OmbiRequestsCommand implements ISlashCommand {
       const content = JSON.parse(requestsResult.content);
 
       if (Array.isArray(content)) {
-        let requests = new Array();
-        if (filterScrubbed && filterScrubbed !== '') {
-          content.forEach((request) => {
-            if (filterScrubbed === 'approved') {
-              if (request.approved === true) {
-                requests.push(request);
+        let requests = content;
+        filtersArr.forEach((filterItem) => {
+          if (filterItem === 'released') {
+            requests = requests.filter((request) => {
+              const requestedDateString = request.releaseDate;
+              if (requestedDateString) {
+                const requestedDate = new Date(requestedDateString);
+                if (requestedDate < new Date()) {
+                  return true;
+                } else {
+                  return false;
+                }
               } else {
-                let addRequest = false;
+                let hasEpisodes = false;
                 if (request.childRequests && Array.isArray(request.childRequests) && request.childRequests.length === 1) {
-                  const seasonsRequested = request.childRequests[0].seasonRequests;
+                  let seasonsRequested = request.childRequests[0].seasonRequests;
                   if (seasonsRequested && Array.isArray(seasonsRequested) && seasonsRequested.length > 0) {
+                    const seasons = new Array();
                     seasonsRequested.forEach((season) => {
                       if (season.episodes && Array.isArray(season.episodes) && season.episodes.length > 0) {
+                        const episodes = new Array();
+                        hasEpisodes = false;
+                        season.episodes.forEach((episode) => {
+                          const airedDateString = episode.airDate;
+                          if (airedDateString) {
+                            const airedDate = new Date(airedDateString);
+                            if (airedDate < new Date()) {
+                              episodes.push(episode);
+                              hasEpisodes = true;
+                            }
+                          }
+                        });
+                        season.episodes = episodes;
+                        if (hasEpisodes) {
+                          seasons.push(season);
+                        }
+                      }
+                    });
+                    seasonsRequested = seasons;
+                  }
+                }
+                return hasEpisodes;
+              }
+            });
+          } else if (filterItem === 'approved') {
+            requests = requests.filter((request) => {
+              if (request.approved === true) {
+                return true;
+              } else {
+                let hasEpisodes = false;
+                if (request.childRequests && Array.isArray(request.childRequests) && request.childRequests.length === 1) {
+                  let seasonsRequested = request.childRequests[0].seasonRequests;
+                  if (seasonsRequested && Array.isArray(seasonsRequested) && seasonsRequested.length > 0) {
+                    const seasons = new Array();
+                    seasonsRequested.forEach((season) => {
+                      if (season.episodes && Array.isArray(season.episodes) && season.episodes.length > 0) {
+                        const episodes = new Array();
+                        hasEpisodes = false;
                         season.episodes.forEach((episode) => {
                           if (episode.approved === true) {
-                            addRequest = true;
+                            episodes.push(episode);
+                            hasEpisodes = true;
                           }
                         });
+                        season.episodes = episodes;
+                        if (hasEpisodes) {
+                          seasons.push(season);
+                        }
                       }
                     });
+                    seasonsRequested = seasons;
                   }
                 }
-                if (addRequest) {
-                  requests.push(request);
-                }
+                return hasEpisodes;
               }
-            } else if (filterScrubbed === 'unapproved') {
-              if (request.approved === false) {
-                requests.push(request);
+            });
+          } else if (filterItem === 'unapproved') {
+            requests = requests.filter((request) => {
+              if (!request.approved || request.approved === false) {
+                return true;
               } else {
-                let addRequest = false;
+                let hasEpisodes = false;
                 if (request.childRequests && Array.isArray(request.childRequests) && request.childRequests.length === 1) {
-                  const seasonsRequested = request.childRequests[0].seasonRequests;
+                  let seasonsRequested = request.childRequests[0].seasonRequests;
                   if (seasonsRequested && Array.isArray(seasonsRequested) && seasonsRequested.length > 0) {
+                    const seasons = new Array();
                     seasonsRequested.forEach((season) => {
                       if (season.episodes && Array.isArray(season.episodes) && season.episodes.length > 0) {
+                        const episodes = new Array();
+                        hasEpisodes = false;
                         season.episodes.forEach((episode) => {
                           if (episode.approved === false) {
-                            addRequest = true;
+                            episodes.push(episode);
+                            hasEpisodes = true;
                           }
                         });
+                        season.episodes = episodes;
+                        if (hasEpisodes) {
+                          seasons.push(season);
+                        }
                       }
                     });
+                    seasonsRequested = seasons;
                   }
                 }
-                if (addRequest) {
-                  requests.push(request);
-                }
+                return hasEpisodes;
               }
-            } else if (filterScrubbed === 'available') {
+            });
+          } else if (filterItem === 'available') {
+            requests = requests.filter((request) => {
               if (request.available === false) {
-                requests.push(request);
+                return true;
               } else {
-                let addRequest = false;
+                let hasEpisodes = false;
                 if (request.childRequests && Array.isArray(request.childRequests) && request.childRequests.length === 1) {
-                  const seasonsRequested = request.childRequests[0].seasonRequests;
+                  let seasonsRequested = request.childRequests[0].seasonRequests;
                   if (seasonsRequested && Array.isArray(seasonsRequested) && seasonsRequested.length > 0) {
+                    const seasons = new Array();
                     seasonsRequested.forEach((season) => {
                       if (season.episodes && Array.isArray(season.episodes) && season.episodes.length > 0) {
+                        const episodes = new Array();
+                        hasEpisodes = false;
                         season.episodes.forEach((episode) => {
                           if (episode.available === true) {
-                            addRequest = true;
+                            episodes.push(episode);
+                            hasEpisodes = true;
                           }
                         });
+                        season.episodes = episodes;
+                        if (hasEpisodes) {
+                          seasons.push(season);
+                        }
                       }
                     });
+                    seasonsRequested = seasons;
                   }
                 }
-                if (addRequest) {
-                  requests.push(request);
-                }
+                return hasEpisodes;
               }
-            } else if (filterScrubbed === 'unavailable') {
-              if (request.available === false) {
-                requests.push(request);
+            });
+          } else if (filterItem === 'unavailable') {
+            requests = requests.filter((request) => {
+              if (!request.available || request.available === false) {
+                return true;
               } else {
-                let addRequest = false;
+                let hasEpisodes = false;
                 if (request.childRequests && Array.isArray(request.childRequests) && request.childRequests.length === 1) {
-                  const seasonsRequested = request.childRequests[0].seasonRequests;
+                  let seasonsRequested = request.childRequests[0].seasonRequests;
                   if (seasonsRequested && Array.isArray(seasonsRequested) && seasonsRequested.length > 0) {
+                    const seasons = new Array();
                     seasonsRequested.forEach((season) => {
                       if (season.episodes && Array.isArray(season.episodes) && season.episodes.length > 0) {
+                        const episodes = new Array();
+                        hasEpisodes = false;
                         season.episodes.forEach((episode) => {
                           if (episode.available === false) {
-                            addRequest = true;
+                            episodes.push(episode);
+                            hasEpisodes = true;
                           }
                         });
+                        season.episodes = episodes;
+                        if (hasEpisodes) {
+                          seasons.push(season);
+                        }
                       }
                     });
+                    seasonsRequested = seasons;
                   }
                 }
-                if (addRequest) {
-                  requests.push(request);
-                }
+                return hasEpisodes;
               }
-            } else if (filterScrubbed === 'denied') {
+            });
+          } else if (filterItem === 'denied') {
+            requests = requests.filter((request) => {
               if (request.denied === true) {
-                requests.push(request);
+                return true;
               } else {
-                let addRequest = false;
+                let hasEpisodes = false;
                 if (request.childRequests && Array.isArray(request.childRequests) && request.childRequests.length === 1) {
-                  const seasonsRequested = request.childRequests[0].seasonRequests;
+                  let seasonsRequested = request.childRequests[0].seasonRequests;
                   if (seasonsRequested && Array.isArray(seasonsRequested) && seasonsRequested.length > 0) {
+                    const seasons = new Array();
                     seasonsRequested.forEach((season) => {
                       if (season.episodes && Array.isArray(season.episodes) && season.episodes.length > 0) {
+                        const episodes = new Array();
+                        hasEpisodes = false;
                         season.episodes.forEach((episode) => {
                           if (episode.denied === true) {
-                            addRequest = true;
+                            episodes.push(episode);
+                            hasEpisodes = true;
                           }
                         });
+                        season.episodes = episodes;
+                        if (hasEpisodes) {
+                          seasons.push(season);
+                        }
                       }
                     });
+                    seasonsRequested = seasons;
                   }
                 }
-                if (addRequest) {
-                  requests.push(request);
-                }
+                return hasEpisodes;
               }
-            }
-          });
-        } else {
-          requests = content;
-        }
+            });
+          }
+        });
         // Sort the requests by requested date desc (newest first)
         requests = requests.sort((a, b) => {
           if (a.requestedDate && b.requestedDate) {
@@ -228,11 +336,15 @@ export class OmbiRequestsCommand implements ISlashCommand {
         });
         requests = requests.reverse();
 
-        const queryMessage = (filterScrubbed && filterScrubbed !== '') ?
-          requestType + ' ' + filterScrubbed :
-          requestType;
+        if (query && query !== '') {
+          requests = requests.filter((request) => {
+            return request.title.indexOf(query) !== -1;
+          });
+        }
 
-        await msgHelper.sendRequestMetadata(requests, serverAddress, read, modify, context.getSender(), context.getRoom(), queryMessage);
+        const queryMessage = requestType + ' ' + filter + (query ? (' ' + query) : '');
+
+        await msgHelper.sendRequestMetadata(requests, serverAddress, requestType, read, modify, context.getSender(), context.getRoom(), queryMessage);
       }
     } else {
       await msgHelper.sendNotificationSingleAttachment({

@@ -9,10 +9,20 @@
   "slashcommand_setserver_description": "Set the Ombi Server Address",
   "slashcommand_login_params": "[USERNAME] [PASSWORD]",
   "slashcommand_login_description": "Login to Ombi",
-  "slashcommand_requests_params": "[movie|tv|show] (approved|unapproved|available|unavailable|denied)",
-  "slashcommand_requests_description": "Show all requests for Movies or Series, optionally filter by approved/available/denied",
+  "slashcommand_requests_params": "[movie|tv|show] (filters=(approved|unapproved|available|unavailable|denied|released)) [QUERY]",
+  "slashcommand_requests_description": "Show all requests for Movies or Series, optionally filter by approved/available/denied/released, also optional filter by a query",
   "slashcommand_search_params": "[movie|tv|show] [QUERY]",
   "slashcommand_search_description": "Search Ombi for Movies or Series",
   "slashcommand_request_params": "[movie|tv|show] [ID]",
-  "slashcommand_request_description": "Request a movie using type and id; If series, specify first, latest, or all season(s)"
+  "slashcommand_request_description": "Request a movie using type and id; If series, specify first, latest, or all season(s)",
+  "slashcommand_approve_params": "[movie|tv|show] [ID]",
+  "slashcommand_approve_description": "Approve a media item by the id of the request",
+  "slashcommand_deny_params": "[movie|tv|show] [ID]",
+  "slashcommand_deny_description": "Deny a media item by the id of the request",
+  "slashcommand_markavailable_params": "[movie|tv|show] [ID]",
+  "slashcommand_markavailable_description": "Mark a media item as Available by the id of the request",
+  "slashcommand_markunavailable_params": "[movie|tv|show] [ID]",
+  "slashcommand_markunavailable_description": "Mark a media item as Unavailable by the id of the request",
+  "slashcommand_delete_params": "[movie|tv|show] [ID]",
+  "slashcommand_delete_description": "Delete a media item by the id of the request"
 }
