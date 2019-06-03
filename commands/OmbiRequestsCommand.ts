@@ -338,7 +338,7 @@ export class OmbiRequestsCommand implements ISlashCommand {
 
         if (query && query !== '') {
           requests = requests.filter((request) => {
-            return request.title.indexOf(query) !== -1;
+            return request.title.toLowerCase().indexOf(query.toLowerCase().trim()) !== -1;
           });
         }
 
