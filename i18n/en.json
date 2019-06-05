@@ -3,6 +3,8 @@
   "customize_name_description": "Choose the username that this app will post as.",
   "customize_icon": "Customize Icon",
   "customize_icon_description": "Choose the icon that is used for messages from this app.",
+  "customize_postto_newrequestnotification": "Channel for New Request Notifications",
+  "customize_postto_newrequestnotification_description": "Channel (or Username) to post new request notifications to.",
   "slashcommand_params": "",
   "slashcommand_description": "Shows all Ombi App commands",
   "slashcommand_setserver_params": "[SERVER ADDRESS]",

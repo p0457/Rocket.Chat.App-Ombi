@@ -42,6 +42,16 @@ export class OmbiApp extends App {
         i18nDescription: 'customize_icon_description',
       });
 
+      await configuration.settings.provideSetting({
+        id: 'ombi_postto_newrequestnotification',
+        type: SettingType.STRING,
+        packageValue: '',
+        required: true,
+        public: false,
+        i18nLabel: 'customize_postto_newrequestnotification',
+        i18nDescription: 'customize_postto_newrequestnotification_description',
+      });
+
       await configuration.slashCommands.provideSlashCommand(new OmbiCommand(this));
       await configuration.slashCommands.provideSlashCommand(new OmbiSetServerCommand(this));
       await configuration.slashCommands.provideSlashCommand(new OmbiLoginCommand(this));

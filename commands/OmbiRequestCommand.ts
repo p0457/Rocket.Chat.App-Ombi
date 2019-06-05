@@ -118,6 +118,51 @@ export class OmbiRequestCommand implements ISlashCommand {
           value: message,
         },
       }, read, modify, context.getSender(), context.getRoom());
+
+      // Notify a user of request
+      // TODO: verify working
+      const requestNotifier = await read.getEnvironmentReader().getSettings().getValueById('ombi_postto_newrequestnotification');
+      if (requestNotifier && requestNotifier !== '@' + context.getSender().username) {
+        let room;
+        if (requestNotifier.startsWith('@')) {
+          room = await read.getRoomReader().getDirectByUsernames(['rocket.cat', requestNotifier.substring(1, requestNotifier.length)]);
+        } else if (requestNotifier.startsWith('#')) {
+          room = await read.getRoomReader().getByName(requestNotifier.substring(1, requestNotifier.length));
+        }
+
+        if (!room) {
+          return;
+        }
+
+        let requestsUrl = serverAddress + '/api/v1/Request/';
+        if (type === 'movie') {
+          requestsUrl += 'movie';
+        } else if (type === 'show' || type === 'tv') {
+          requestsUrl += 'tv';
+        }
+
+        const requestsResult = await http.get(requestsUrl, {headers});
+
+        if (requestsResult.content) {
+          const content = JSON.parse(requestsResult.content);
+          if (Array.isArray(content)) {
+            let requests = content;
+            requests = requests.filter((request) => {
+              if (type === 'movie') {
+                return request.theMovieDbId === id;
+              } else if (type === 'show' || type === 'tv') {
+                return (request.id || request.tvDbId) === id;
+              } else {
+                return false;
+              }
+            });
+            if (requests && requests.length === 1) {
+              const sender = await read.getUserReader().getById('rocket.cat');
+              await msgHelper.sendRequestMetadata(requests, serverAddress, type, read, modify, sender, room, 'notifier-setting');
+            }
+          }
+        }
+      }
     } else {
       await msgHelper.sendNotificationSingleAttachment({
         collapsed: false,
