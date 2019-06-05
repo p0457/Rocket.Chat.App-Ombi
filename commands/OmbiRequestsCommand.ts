@@ -13,12 +13,22 @@ export class OmbiRequestsCommand implements ISlashCommand {
   public constructor(private readonly app: OmbiApp) {}
 
   public async executor(context: SlashCommandContext, read: IRead, modify: IModify, http: IHttp, persis: IPersistence): Promise<void> {
-    const [requestType, filter, query] = context.getArguments();
+    // const [requestType, filterOrQuery] = context.getArguments();
+
+    const args = context.getArguments();
+    if (args.length === 0) {
+      await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'Invalid number of arguments!');
+      return;
+    }
+
+    const requestType = args[0];
 
     if (!requestType) {
       await msgHelper.sendUsage(read, modify, context.getSender(), context.getRoom(), this.command, 'Invalid request type!');
       return;
     }
+
+    let filterOrQuery = args.join(' ').replace(requestType, '').trim();
 
     // FILTERS
     let m;
@@ -28,7 +38,7 @@ export class OmbiRequestsCommand implements ISlashCommand {
     const filters = new Array();
 
     // tslint:disable-next-line:no-conditional-assignment
-    while ((m = filtersRegex.exec(filter)) !== null) {
+    while ((m = filtersRegex.exec(filterOrQuery)) !== null) {
       // This is necessary to avoid infinite loops with zero-width matches
       if (m.index === filtersRegex.lastIndex) {
         filtersRegex.lastIndex++;
@@ -54,6 +64,8 @@ export class OmbiRequestsCommand implements ISlashCommand {
             return;
         }
       });
+      // Update query
+      filterOrQuery = filterOrQuery.replace(filtersTextToRemove, '').trim();
     }
 
     const persistence = new AppPersistence(persis, read.getPersistenceReader());
@@ -336,13 +348,15 @@ export class OmbiRequestsCommand implements ISlashCommand {
         });
         requests = requests.reverse();
 
+        const query = filterOrQuery;
+
         if (query && query !== '') {
           requests = requests.filter((request) => {
             return request.title.toLowerCase().indexOf(query.toLowerCase().trim()) !== -1;
           });
         }
 
-        const queryMessage = requestType + ' ' + filter + (query ? (' ' + query) : '');
+        const queryMessage = requestType + (filtersText ? (' ' + filtersText) : '') + (query ? (' ' + query) : '');
 
         await msgHelper.sendRequestMetadata(requests, serverAddress, requestType, read, modify, context.getSender(), context.getRoom(), queryMessage);
       }
