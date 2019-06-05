@@ -83,7 +83,7 @@ export async function sendTokenExpired(read: IRead, modify: IModify, user: IUser
     title: {
       value: 'Token Expired!',
     },
-    text: 'Please login again using `/ombi login [USERNAME] [PASSWORD]`',
+    text: 'Please login again using `/ombi-login [USERNAME] [PASSWORD]`',
   }, read, modify, user, room);
 }
 
@@ -626,7 +626,7 @@ export async function sendSearchMetadata(results, serverAddress, read: IRead, mo
     if (typeTemp === 'tv') {
       typeTemp = 'show';
     }
-    const requestMsg = '/ombi request ' + type + ' ' + result.id;
+    const requestMsg = '/ombi-request ' + type + ' ' + result.id;
     if (type === 'tv') {
       actions.push({
         type: MessageActionType.BUTTON,

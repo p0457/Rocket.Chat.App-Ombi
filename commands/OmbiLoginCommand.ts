@@ -31,7 +31,7 @@ export class OmbiLoginCommand implements ISlashCommand {
         title: {
           value: 'No server set!',
         },
-        text: 'Please set a server address using the command `/ombi set-server [SERVER ADDRESS]`',
+        text: 'Please set a server address using the command `/ombi-set-server [SERVER ADDRESS]`',
       }, read, modify, context.getSender(), context.getRoom());
       return;
     }
