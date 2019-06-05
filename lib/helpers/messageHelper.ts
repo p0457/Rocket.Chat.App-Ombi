@@ -503,7 +503,7 @@ export async function sendSearchMetadata(results, serverAddress, read: IRead, mo
       fields.push({
         short: true,
         title: 'Requested',
-        value: result.requestedDate + '\n' + result.requestedUser.userAlias,
+        value: formatDate(result.requestedDate) + '\n' + result.requestedUser.userAlias,
       });
     }
     if (result.status) {
@@ -517,14 +517,14 @@ export async function sendSearchMetadata(results, serverAddress, read: IRead, mo
       fields.push({
         short: true,
         title: timeSince(result.releaseDate).indexOf('ago') !== -1 ? 'Released on' : 'Releases on',
-        value: result.releaseDate,
+        value: formatDate(result.releaseDate) + '\n_(' + timeSince(result.releaseDate) + ')_',
       });
     }
     if (result.digitalReleaseDate !== undefined) {
       fields.push({
         short: true,
         title: timeSince(result.releaseDate).indexOf('ago') !== -1 ? 'Digitally Released on' : 'Digitally Releases on',
-        value: result.digitalReleaseDate,
+        value: formatDate(result.digitalReleaseDate) + '\n_(' + timeSince(result.digitalReleaseDate) + ')_\n',
       });
     }
     if (result.available !== undefined) {
@@ -662,11 +662,22 @@ export async function sendSearchMetadata(results, serverAddress, read: IRead, mo
       text += '\n*Overview: *' + result.overview;
     }
 
+    let attachmentTitle = result.title;
+    let releaseYear = getYear(result.releaseDate);
+    if (result.releaseDate && releaseYear && releaseYear > 1000) {
+      attachmentTitle += ` (${releaseYear})`;
+    } else if (result.firstAired) {
+      releaseYear = getYear(result.firstAired);
+      if (releaseYear && releaseYear > 1000) {
+        attachmentTitle += ` (${releaseYear})`;
+      }
+    }
+
     attachments.push({
       collapsed: tempResults.length === 1 ? false : true,
       color: '#e37200',
       title: {
-        value: result.title,
+        value: attachmentTitle,
         link: serverAddress,
       },
       fields,
