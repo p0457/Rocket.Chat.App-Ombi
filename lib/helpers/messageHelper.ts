@@ -104,8 +104,11 @@ export async function sendRequestMetadata(requests, serverAddress, requestType, 
     const request = requests[x];
 
     let canApprove = false;
-    if (request.canApprove !== undefined) {
-      canApprove = request.canApprove;
+    if (request.approved !== undefined) {
+      canApprove = !request.approved;
+      if (request.canApprove !== undefined) {
+        canApprove = request.canApprove;
+      }
     } else if (request.childRequests && request.childRequests[0].approved !== undefined) {
       canApprove = request.childRequests[0].approved;
     }
