@@ -43,6 +43,10 @@ export async function createLoginModal({ id = '', persis, data, read, modify, se
     });
     block.addInputBlock({
         blockId: 'ombipassword',
+        /* 
+            Would like a password element input to obscure text entered
+            Would also like a way to import modules for use with encrypting these values, at least minimally
+        */
         element: block.newPlainTextInputElement({ 
             actionId: 'password',
             placeholder: block.newPlainTextObject('Password')
