@@ -6,9 +6,10 @@ import { formatDate, getYear, timeSince } from './dates';
 import usage from './usage';
 
 export async function sendNotification(text: string, read: IRead, modify: IModify, user: IUser, room: IRoom): Promise<void> {
-  const icon = await read.getEnvironmentReader().getSettings().getValueById('ombi_icon');
-  const username = await read.getEnvironmentReader().getSettings().getValueById('ombi_name');
-  const sender = await read.getUserReader().getById('rocket.cat');
+  const icon = await read.getEnvironmentReader().getSettings().getValueById('icon');
+  const username = await read.getEnvironmentReader().getSettings().getValueById('name');
+  const senderName = await read.getEnvironmentReader().getSettings().getValueById('sender');
+  const sender = await read.getUserReader().getById(senderName);
 
   modify.getNotifier().notifyUser(user, modify.getCreator().startMessage({
       sender,
@@ -21,9 +22,10 @@ export async function sendNotification(text: string, read: IRead, modify: IModif
 }
 
 export async function sendNotificationSingleAttachment(attachment: IMessageAttachment, read: IRead, modify: IModify, user: IUser, room: IRoom): Promise<void> {
-  const icon = await read.getEnvironmentReader().getSettings().getValueById('ombi_icon');
-  const username = await read.getEnvironmentReader().getSettings().getValueById('ombi_name');
-  const sender = await read.getUserReader().getById('rocket.cat');
+  const icon = await read.getEnvironmentReader().getSettings().getValueById('icon');
+  const username = await read.getEnvironmentReader().getSettings().getValueById('name');
+  const senderName = await read.getEnvironmentReader().getSettings().getValueById('sender');
+  const sender = await read.getUserReader().getById(senderName);
 
   modify.getNotifier().notifyUser(user, modify.getCreator().startMessage({
       sender,
@@ -36,9 +38,10 @@ export async function sendNotificationSingleAttachment(attachment: IMessageAttac
 }
 
 export async function sendNotificationMultipleAttachments(attachments: Array<IMessageAttachment>, read: IRead, modify: IModify, user: IUser, room: IRoom): Promise<void> {
-  const icon = await read.getEnvironmentReader().getSettings().getValueById('ombi_icon');
-  const username = await read.getEnvironmentReader().getSettings().getValueById('ombi_name');
-  const sender = await read.getUserReader().getById('rocket.cat');
+  const icon = await read.getEnvironmentReader().getSettings().getValueById('icon');
+  const username = await read.getEnvironmentReader().getSettings().getValueById('name');
+  const senderName = await read.getEnvironmentReader().getSettings().getValueById('sender');
+  const sender = await read.getUserReader().getById(senderName);
 
   modify.getNotifier().notifyUser(user, modify.getCreator().startMessage({
       sender,

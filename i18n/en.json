@@ -1,4 +1,6 @@
 {
+  "customize_sender": "Customize Sender",
+  "customize_sender_description": "Choose the user that this app will post as.",
   "customize_name": "Customize Name",
   "customize_name_description": "Choose the username that this app will post as.",
   "customize_icon": "Customize Icon",
@@ -7,9 +9,7 @@
   "customize_postto_newrequestnotification_description": "Channel (or Username) to post new request notifications to.",
   "slashcommand_params": "",
   "slashcommand_description": "Shows all Ombi App commands",
-  "slashcommand_setserver_params": "[SERVER ADDRESS]",
-  "slashcommand_setserver_description": "Set the Ombi Server Address",
-  "slashcommand_login_params": "[USERNAME] [PASSWORD]",
+  "slashcommand_login_params": "[SERVER URL]",
   "slashcommand_login_description": "Login to Ombi",
   "slashcommand_requests_params": "[movie|tv|show] (filters=(approved|unapproved|available|unavailable|denied|released)) [QUERY]",
   "slashcommand_requests_description": "Show all requests for Movies or Series, optionally filter by approved/available/denied/released, also optional filter by a query",

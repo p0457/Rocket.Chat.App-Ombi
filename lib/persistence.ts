@@ -20,6 +20,16 @@ export class AppPersistence {
 
     return result ? (result as any).server : undefined;
   }
+
+  public async getUserServerById(userid: string): Promise<string | undefined> {
+    const userAssociation = new RocketChatAssociationRecord(RocketChatAssociationModel.USER, userid);
+    const typeAssociation = new RocketChatAssociationRecord(RocketChatAssociationModel.MISC, 'ombi-server');
+
+    const [result] = await this.persistenceRead.readByAssociations([userAssociation, typeAssociation]);
+
+    return result ? (result as any).server : undefined;
+  }
+
   public async setUserToken(token: string, user: IUser): Promise<void> {
     const userAssociation = new RocketChatAssociationRecord(RocketChatAssociationModel.USER, user.id);
     const typeAssociation = new RocketChatAssociationRecord(RocketChatAssociationModel.MISC, 'ombi-token');

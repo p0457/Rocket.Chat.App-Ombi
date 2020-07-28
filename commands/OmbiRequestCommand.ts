@@ -13,6 +13,8 @@ export class OmbiRequestCommand implements ISlashCommand {
   public constructor(private readonly app: OmbiApp) {}
 
   public async executor(context: SlashCommandContext, read: IRead, modify: IModify, http: IHttp, persis: IPersistence): Promise<void> {
+    const senderName = await read.getEnvironmentReader().getSettings().getValueById('sender');
+    const sender = await read.getUserReader().getById(senderName);
     const [requestType, id, specifier] = context.getArguments();
 
     if (!requestType || !id) {
@@ -121,11 +123,11 @@ export class OmbiRequestCommand implements ISlashCommand {
 
       // Notify a user of request
       // TODO: verify working
-      const requestNotifier = await read.getEnvironmentReader().getSettings().getValueById('ombi_postto_newrequestnotification');
+      const requestNotifier = await read.getEnvironmentReader().getSettings().getValueById('postto_newrequestnotification');
       if (requestNotifier && requestNotifier !== '@' + context.getSender().username) {
         let room;
         if (requestNotifier.startsWith('@')) {
-          room = await read.getRoomReader().getDirectByUsernames(['rocket.cat', requestNotifier.substring(1, requestNotifier.length)]);
+          room = await read.getRoomReader().getDirectByUsernames([senderName, requestNotifier.substring(1, requestNotifier.length)]);
         } else if (requestNotifier.startsWith('#')) {
           room = await read.getRoomReader().getByName(requestNotifier.substring(1, requestNotifier.length));
         }
@@ -157,7 +159,6 @@ export class OmbiRequestCommand implements ISlashCommand {
               }
             });
             if (requests && requests.length === 1) {
-              const sender = await read.getUserReader().getById('rocket.cat');
               await msgHelper.sendRequestMetadata(requests, serverAddress, type, read, modify, sender, room, 'notifier-setting');
             }
           }

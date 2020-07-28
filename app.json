@@ -1,7 +1,7 @@
 {
     "id": "47939eda-2366-4aea-b1ca-58627f5aa109",
-    "version": "1.4.5",
-    "requiredApiVersion": "^1.4.0",
+    "version": "1.5.3",
+    "requiredApiVersion": "^1.12.0",
     "iconFile": "icon.png",
     "author": {
         "name": "Thomas Gardner",
@@ -11,5 +11,5 @@
     "name": "Ombi",
     "nameSlug": "ombi",
     "classFile": "OmbiApp.ts",
-    "description": "Interact with your Ombi Server."
+    "description": "Interact with your Ombi Server. Configurable by user."
 }

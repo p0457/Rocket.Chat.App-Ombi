@@ -3,6 +3,6 @@
 version: '1'
 
 services:
-  rocketchatapp_jitsi:
+  rocketchatapp_ombi:
     image: rocketchatapp_ombi:latest
     container_name: rocketchatapp_ombi
