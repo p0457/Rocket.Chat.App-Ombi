@@ -6,7 +6,7 @@ export default {
   },
   login: {
     command: 'ombi-login',
-    usage: '`/ombi-login [USERNAME] [PASSWORD]`',
+    usage: '`/ombi-login`',
     description: 'Login to Ombi',
   },
   requests: {
